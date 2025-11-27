@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection } from "discord.js";
+import { Client, GatewayIntentBits, Collection, MessageFlags } from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -74,16 +74,7 @@ async function main(): Promise<void> {
             await command.execute(interaction);
         } catch (error) {
             console.error(`Error executing command ${interaction.commandName}:`, error);
-            const replyOptions = { content: "There was an error while executing this command!", ephemeral: true };
-            try {
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp(replyOptions);
-                } else {
-                    await interaction.reply(replyOptions);
-                }
-            } catch (replyErr) {
-                console.error("Failed to send error reply:", replyErr);
-            }
+            await interaction.reply({ content: "There was an error while executing this command!", flags: MessageFlags.Ephemeral });
         }
     });
 
