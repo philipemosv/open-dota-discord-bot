@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Collection } from "discord.js";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { connectToDatabase } from "./db";
 
 type BotCommand = {
     data: { name: string };
@@ -15,6 +16,20 @@ async function main(): Promise<void> {
     if (!token) {
         console.error("DISCORD_TOKEN is not set in environment.");
         process.exit(1);
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+        console.error("MONGODB_URI is not set in environment.");
+        process.exit(1);
+    } else {
+        try {
+            await connectToDatabase(mongoUri);
+            console.log("Connected to MongoDB.");
+        } catch (dbErr) {
+            console.error("Failed to connect to MongoDB:", dbErr);
+            process.exit(1);
+        }
     }
 
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });
