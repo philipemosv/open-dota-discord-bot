@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js';
 import UserModel from '../models/User';
+import { getWinLoss } from '../opendota';
 
 export default {
   data: new SlashCommandBuilder()
@@ -33,20 +34,8 @@ export default {
         return;
       }
 
-      const url = new URL(
-        `https://api.opendota.com/api/players/${user.steamId}/wl`,
-      );
-      url.searchParams.append('date', String(days));
-      url.searchParams.append('lobby_type', '7');
+      const data = await getWinLoss(user.steamId, days);
 
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.error('OpenDota API error:', res.status, res.statusText);
-        await interaction.editReply('Error fetching data from OpenDota API.');
-        return;
-      }
-
-      const data = await res.json();
       const winrate =
         data.win + data.lose === 0
           ? 0

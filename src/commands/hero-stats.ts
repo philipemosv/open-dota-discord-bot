@@ -2,6 +2,7 @@ import { EmbedBuilder, SlashCommandBuilder, MessageFlags } from 'discord.js';
 import UserModel from '../models/User';
 import { processHeroData } from '../utils/heroStats';
 import { buildTable } from '../utils/tableFormatter';
+import { getHeroStats } from '../opendota';
 
 export default {
   data: new SlashCommandBuilder()
@@ -30,20 +31,8 @@ export default {
         return;
       }
 
-      const url = new URL(
-        `https://api.opendota.com/api/players/${user.steamId}/heroes`,
-      );
-      url.searchParams.append('date', String(days));
-      url.searchParams.append('lobby_type', '7');
+      const data = await getHeroStats(user.steamId, days);
 
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.error('OpenDota API error:', res.status, res.statusText);
-        await interaction.editReply('Error fetching data from OpenDota API.');
-        return;
-      }
-
-      const data = await res.json();
       if (data.length === 0) {
         await interaction.editReply(
           'No hero data found for the specified period.',
