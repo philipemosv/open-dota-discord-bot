@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder, MessageFlags } from 'discord.js';
 import UserModel from '../models/User';
 import { processHeroData } from '../utils/hero-stats-helper';
-import { formatHeroStatsTable } from '../utils/table-formatter';
+import { formatHeroStatsTable } from '../utils/table-formatter-helper';
 import { getHeroStats } from '../opendota';
 
 export default {
@@ -42,8 +42,18 @@ export default {
 
       const heroStats = processHeroData(data);
       const table = formatHeroStatsTable(heroStats);
+      const daysText = days === 0 ? 'Today' : `Last ${days} days`;
 
-      const embed = new EmbedBuilder().setDescription('```\n' + table + '```');
+      const embed = new EmbedBuilder()
+        .setAuthor({
+          name: `${interaction.user.username} - Hero Stats (${daysText})`,
+          iconURL:
+            'https://avatars.steamstatic.com/d7ee96dce61bff8c9b8699efe41bacb093befabd_full.jpg',
+          url: 'https://steamcommunity.com/id/mrshrg/',
+        })
+        .setDescription('```\n' + table + '```')
+        .setFooter({ text: '🟩 >= 60% | 🟧 >= 45% | 🟥 < 45%' });
+
       await interaction.editReply({ embeds: [embed] });
     } catch (err) {
       console.error('Error in /stats command:', err);
