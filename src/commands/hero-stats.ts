@@ -33,7 +33,7 @@ export default {
 
       const data = await getHeroStats(user.steamId, days);
 
-      if (data.length === 0) {
+      if (data.length === 0 || data.every((d: any) => d.games === 0)) {
         await interaction.editReply(
           'No hero data found for the specified period.',
         );
