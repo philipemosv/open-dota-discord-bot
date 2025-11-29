@@ -1,3 +1,5 @@
+import heroes from '../heroes';
+
 // -------- Padding Helpers --------
 export function padLeft(value: string | number, width: number): string {
   return String(value).padStart(width, ' ');
@@ -110,4 +112,46 @@ export function buildTable(rows: HeroStats[]): string {
   const separator = buildTableSeparator(cols);
   const tableRows = buildTableRows(rows, cols);
   return `${header}\n${separator}\n${tableRows}`;
+}
+
+export function formatMatchTable(matchData: any): string {
+  const header = `| ${'Player'.padEnd(35)} | ${'Hero'.padEnd(19)} | ${'K/D/A'.padEnd(8)} | ${'GPM'.padEnd(4)} | ${'XPM'.padEnd(4)} | ${'DMG'.padEnd(6)} | ${'NW'.padEnd(5)} |`;
+  const separator = `| ${'-'.repeat(35)} | ${'-'.repeat(19)} | ${'-'.repeat(8)} | ${'-'.repeat(4)} | ${'-'.repeat(4)} | ${'-'.repeat(6)} | ${'-'.repeat(5)} |`;
+
+  const buildTeamTable = (players: any[], teamName: string) => {
+    const sortedPlayers = players.sort((a, b) => b.net_worth - a.net_worth);
+
+    const rows = sortedPlayers.map((p: any) => {
+      const name = (p.personaname || 'Anonymous').substring(0, 35).padEnd(35);
+      const heroName =
+        heroes.find((h) => h.id === p.hero_id)?.name || 'Unknown';
+      const hero = heroName.padEnd(19);
+      const kda = `${p.kills}/${p.deaths}/${p.assists}`.padEnd(8);
+      const gpm = p.gold_per_min.toString().padEnd(4);
+      const xpm = p.xp_per_min.toString().padEnd(4);
+      const dmgVal =
+        p.hero_damage > 1000
+          ? `${(p.hero_damage / 1000).toFixed(1)}k`
+          : p.hero_damage;
+      const dmg = dmgVal.toString().padEnd(6);
+      const nwVal =
+        p.net_worth > 1000
+          ? `${(p.net_worth / 1000).toFixed(1)}k`
+          : p.net_worth;
+      const nw = nwVal.toString().padEnd(5);
+      return `| ${name} | ${hero} | ${kda} | ${gpm} | ${xpm} | ${dmg} | ${nw} |`;
+    });
+
+    return `**${teamName}**\n${header}\n${separator}\n${rows.join('\n')}`;
+  };
+
+  const radiantPlayers = matchData.players.filter((p: any) => p.isRadiant);
+  const direPlayers = matchData.players.filter((p: any) => !p.isRadiant);
+
+  const radiantTable = buildTeamTable(radiantPlayers, 'Radiant');
+  const direTable = buildTeamTable(direPlayers, 'Dire');
+
+  const winner = matchData.radiant_win ? 'Radiant' : 'Dire';
+
+  return `\`\`\`prolog\nWinner: ${winner}\n\n${radiantTable}\n\n${direTable}\n\`\`\``;
 }

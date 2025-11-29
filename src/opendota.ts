@@ -31,3 +31,14 @@ export function getWinLoss(steamId: string, days: number): Promise<any> {
     lobby_type: '7',
   });
 }
+
+export async function getRecentMatches(steamId: string): Promise<any> {
+  return fetchOpenDotaApi(`/players/${steamId}/matches`, {
+    limit: '10',
+    lobby_type: '7',
+  });
+}
+
+export async function getMatchDetails(matchId: string): Promise<any> {
+  return fetchOpenDotaApi(`/matches/${matchId}`);
+}
