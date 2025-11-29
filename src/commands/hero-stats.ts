@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder, MessageFlags } from 'discord.js';
 import UserModel from '../models/User';
-import { processHeroData } from '../utils/heroStats';
-import { buildTable } from '../utils/tableFormatter';
+import { processHeroData } from '../utils/hero-stats-helper';
+import { formatHeroStatsTable } from '../utils/table-formatter';
 import { getHeroStats } from '../opendota';
 
 export default {
@@ -41,7 +41,7 @@ export default {
       }
 
       const heroStats = processHeroData(data);
-      const table = buildTable(heroStats);
+      const table = formatHeroStatsTable(heroStats);
 
       const embed = new EmbedBuilder().setDescription('```\n' + table + '```');
       await interaction.editReply({ embeds: [embed] });

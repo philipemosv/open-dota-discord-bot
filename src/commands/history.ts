@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import UserModel from '../models/User';
 import { getRecentMatches, getMatchDetails } from '../opendota';
 import heroes from '../heroes';
-import { formatMatchTable } from '../utils/tableFormatter';
+import { formatMatchTable } from '../utils/table-formatter';
 
 export default {
   data: new SlashCommandBuilder()
