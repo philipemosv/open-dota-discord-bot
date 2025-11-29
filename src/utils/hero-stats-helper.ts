@@ -1,7 +1,6 @@
 import heroes from '../heroes';
-import { HeroStats } from './tableFormatter';
 
-export function processHeroData(data: any[]): HeroStats[] {
+export function processHeroData(data: any[]): any[] {
   return data
     .filter((hero: any) => hero.games > 0)
     .sort((a: any, b: any) => {
