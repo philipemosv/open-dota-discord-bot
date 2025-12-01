@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import UserModel from '../models/User';
 import { getRecentMatches, getMatchDetails } from '../opendota';
 import heroes from '../heroes';
-import { formatMatchTable } from '../utils/table-formatter-helper';
+import { createMatchEmbed } from '../utils/table-formatter-helper';
 
 export default {
   data: new SlashCommandBuilder()
@@ -21,8 +21,8 @@ export default {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const discordId = interaction.user.id;
-
     const user = await UserModel.findOne({ discordId });
+
     if (!user) {
       await interaction.editReply(
         'User not found. Please link your Steam account first.\nUse `/link` command to link your account.',
@@ -41,7 +41,6 @@ export default {
       const options = matches.map((m: any) => {
         const date = dayjs(m.start_time * 1000).format('DD/MM/YYYY HH:mm');
         const hero = heroes.find((h) => h.id === m.hero_id)?.name || 'Unknown';
-
         const isRadiant = m.player_slot < 128;
         const win =
           (isRadiant && m.radiant_win) || (!isRadiant && !m.radiant_win);
@@ -81,13 +80,16 @@ export default {
 
           try {
             const details = await getMatchDetails(matchId);
-            const table = formatMatchTable(details);
+
+            const embed = createMatchEmbed(details);
 
             await i.editReply({
-              content: `Match Details: ${matchId}\n${table}`,
+              content: '',
+              embeds: [embed],
               components: [menuRow],
             });
           } catch (err) {
+            console.error(err);
             await i.followUp({
               content: 'Error fetching match details.',
               flags: MessageFlags.Ephemeral,
