@@ -1,5 +1,5 @@
 import { EmbedBuilder, SlashCommandBuilder, MessageFlags } from 'discord.js';
-import UserModel from '../models/User';
+import { findUserByDiscordId } from '../db';
 import { processHeroData } from '../utils/hero-stats-helper';
 import { formatHeroStatsTable } from '../utils/table-formatter-helper';
 import { getHeroStats } from '../opendota';
@@ -23,7 +23,7 @@ export default {
       const days = interaction.options.getInteger('days', true);
       const discordId = interaction.user.id;
 
-      const user = await UserModel.findOne({ discordId });
+      const user = findUserByDiscordId(discordId);
       if (!user) {
         await interaction.editReply(
           'User not found. Please link your Steam account first.\nUse `/link` command to link your account.',
@@ -31,7 +31,7 @@ export default {
         return;
       }
 
-      const data = await getHeroStats(user.steamId, days);
+      const data = await getHeroStats(user.steam_id, days);
 
       if (data.length === 0 || data.every((d: any) => d.games === 0)) {
         await interaction.editReply(

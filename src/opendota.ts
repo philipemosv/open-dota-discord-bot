@@ -32,11 +32,19 @@ export function getWinLoss(steamId: string, days: number): Promise<any> {
   });
 }
 
-export async function getRecentMatches(steamId: string): Promise<any> {
-  return fetchOpenDotaApi(`/players/${steamId}/matches`, {
-    limit: '10',
+export async function getRecentMatches(
+  steamId: string,
+  days?: number,
+  limit: number = 10,
+): Promise<any> {
+  const params: Record<string, string> = {
+    limit: String(limit),
     lobby_type: '7',
-  });
+  };
+  if (days && days > 0) {
+    params.date = String(days);
+  }
+  return fetchOpenDotaApi(`/players/${steamId}/matches`, params);
 }
 
 export async function getMatchDetails(matchId: string): Promise<any> {

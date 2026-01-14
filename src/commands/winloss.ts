@@ -2,9 +2,21 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   MessageFlags,
+  EmbedBuilder,
 } from 'discord.js';
-import UserModel from '../models/User';
-import { getWinLoss } from '../opendota';
+import { findUserByDiscordId } from '../db';
+import { getWinLoss, getRecentMatches } from '../opendota';
+import {
+  calculateStreaks,
+  formatStreak,
+  getStreakEmoji,
+} from '../utils/streak-helper';
+
+function getWinRateColor(winrate: number): number {
+  if (winrate >= 55) return 0x00ff00;
+  if (winrate >= 45) return 0xffa500;
+  return 0xff0000;
+}
 
 export default {
   data: new SlashCommandBuilder()
@@ -20,13 +32,15 @@ export default {
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
+    let deferred = false;
     try {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      deferred = true;
 
       const days = interaction.options.getInteger('days', true);
       const discordId = interaction.user.id;
 
-      const user = await UserModel.findOne({ discordId });
+      const user = findUserByDiscordId(discordId);
       if (!user) {
         await interaction.editReply(
           'User not found. Please link your Steam account first.\nUse `/link` command to link your account.',
@@ -34,22 +48,59 @@ export default {
         return;
       }
 
-      const data = await getWinLoss(user.steamId, days);
+      const [wlData, matches] = await Promise.all([
+        getWinLoss(user.steam_id, days),
+        getRecentMatches(user.steam_id, days, 500),
+      ]);
 
-      const winrate =
-        data.win + data.lose === 0
-          ? 0
-          : (data.win / (data.win + data.lose)) * 100;
+      const totalGames = wlData.win + wlData.lose;
+      const winrate = totalGames === 0 ? 0 : (wlData.win / totalGames) * 100;
+      const mmrChange = (wlData.win - wlData.lose) * 25;
+      const streaks = calculateStreaks(matches, user.steam_id);
 
-      const mmrChange = (data.win - data.lose) * 25; // Assuming 25 MMR per win/loss
+      const periodText = days === 0 ? 'All Time' : `Last ${days} days`;
+      const currentStreakText = `${getStreakEmoji(streaks.currentStreak)} ${formatStreak(streaks.currentStreak)}`;
 
-      const replyMessage = `**W:** ${data.win} | **L:** ${data.lose} | **WR%:** ${winrate.toFixed(2)}% | **~MMR:** ${mmrChange >= 0 ? '+' : ''}${mmrChange}`;
-      await interaction.editReply(replyMessage);
+      const embed = new EmbedBuilder()
+        .setTitle(`Win/Loss - ${periodText}`)
+        .setColor(getWinRateColor(winrate))
+        .addFields(
+          { name: 'Wins', value: String(wlData.win), inline: true },
+          { name: 'Losses', value: String(wlData.lose), inline: true },
+          { name: 'Win Rate', value: `${winrate.toFixed(1)}%`, inline: true },
+          {
+            name: '~MMR Change',
+            value: `${mmrChange >= 0 ? '+' : ''}${mmrChange}`,
+            inline: true,
+          },
+          { name: 'Current Streak', value: currentStreakText, inline: true },
+          { name: 'Total Games', value: String(totalGames), inline: true },
+          {
+            name: 'Best Win Streak',
+            value: `${streaks.longestWinStreak}W`,
+            inline: true,
+          },
+          {
+            name: 'Worst Loss Streak',
+            value: `${streaks.longestLossStreak}L`,
+            inline: true,
+          },
+        )
+        .setFooter({ text: 'Ranked matches only' })
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
     } catch (err) {
       console.error('Error in /wl command:', err);
-      await interaction.editReply(
-        'There was an error while executing this command.',
-      );
+      if (deferred) {
+        try {
+          await interaction.editReply(
+            'There was an error while executing this command.',
+          );
+        } catch {
+          // Interaction expired, ignore
+        }
+      }
     }
   },
 };

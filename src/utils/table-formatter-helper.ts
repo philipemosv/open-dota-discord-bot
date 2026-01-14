@@ -52,12 +52,13 @@ export function createMatchEmbed(matchData: any) {
           : rawName;
 
         const kda = `${p.kills}/${p.deaths}/${p.assists}`;
+        const gpm = p.gold_per_min || 0;
         const nw =
           p.net_worth > 1000
             ? `${(p.net_worth / 1000).toFixed(1)}k`
             : p.net_worth;
 
-        return `**${heroName}** \u2022 ${playerLink}\n└ ${kda} KDA \u2022 ${nw} NW`;
+        return `**${heroName}** \u2022 ${playerLink}\n└ ${kda} KDA \u2022 ${gpm} GPM \u2022 ${nw} NW`;
       })
       .join('\n\n');
   };

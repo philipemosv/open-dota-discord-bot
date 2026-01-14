@@ -7,7 +7,7 @@ import {
   MessageFlags,
 } from 'discord.js';
 import dayjs from 'dayjs';
-import UserModel from '../models/User';
+import { findUserByDiscordId } from '../db';
 import { getRecentMatches, getMatchDetails } from '../opendota';
 import heroes from '../heroes';
 import { createMatchEmbed } from '../utils/table-formatter-helper';
@@ -21,7 +21,7 @@ export default {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const discordId = interaction.user.id;
-    const user = await UserModel.findOne({ discordId });
+    const user = findUserByDiscordId(discordId);
 
     if (!user) {
       await interaction.editReply(
@@ -31,7 +31,7 @@ export default {
     }
 
     try {
-      const matches = await getRecentMatches(user.steamId);
+      const matches = await getRecentMatches(user.steam_id);
       if (!matches || matches.length === 0) {
         return interaction.editReply({
           content: 'No matches found or profile is private.',
