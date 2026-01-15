@@ -33,7 +33,7 @@ A Discord bot for Dota 2 statistics using the [OpenDota API](https://docs.opendo
 
 - Node.js 18+
 - A Discord Bot Token ([Discord Developer Portal](https://discord.com/developers/applications))
-- Your Steam ID (find it at [steamid.io](https://steamid.io/))
+- Your Steam ID (find it at [steamid.xyz](https://steamid.xyz/) or [findsteamid.com](https://findsteamid.com/))
 
 ### Installation
 
